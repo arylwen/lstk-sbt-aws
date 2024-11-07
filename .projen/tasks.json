@@ -32,7 +32,7 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": "",
+        "RELEASE_TAG_PREFIX": "@cdklabs/sbt-aws-",
         "BUMP_PACKAGE": "commit-and-tag-version@^12"
       },
       "steps": [
@@ -137,7 +137,7 @@
       "description": "Install project dependencies and update lockfile (non-frozen)",
       "steps": [
         {
-          "exec": "yarn install --check-files"
+          "exec": "npm install"
         }
       ]
     },
@@ -146,7 +146,7 @@
       "description": "Install project dependencies using frozen lockfile",
       "steps": [
         {
-          "exec": "yarn install --check-files --frozen-lockfile"
+          "exec": "npm ci"
         }
       ]
     },
@@ -155,7 +155,7 @@
       "description": "Creates the distribution package",
       "steps": [
         {
-          "spawn": "package:js",
+          "exec": "rsync -a . .repo --exclude .git --exclude node_modules && rm -rf dist && mv .repo dist",
           "condition": "node -e \"if (!process.env.CI) process.exit(1)\""
         },
         {
@@ -203,7 +203,8 @@
       "name": "release",
       "description": "Prepare a release from \"main\" branch",
       "env": {
-        "RELEASE": "true"
+        "RELEASE": "true",
+        "RELEASE_TAG_PREFIX": "@cdklabs/sbt-aws-"
       },
       "steps": [
         {
@@ -253,7 +254,7 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": "",
+        "RELEASE_TAG_PREFIX": "@cdklabs/sbt-aws-",
         "BUMP_PACKAGE": "commit-and-tag-version@^12"
       },
       "steps": [
@@ -270,13 +271,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@types/jest,@types/node,eslint-import-resolver-typescript,eslint-plugin-import,jest,jsii-diff,jsii-pacmak,projen,ts-jest,ts-node,typescript"
+          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/jest,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-header,eslint-plugin-import,eslint-plugin-prettier,jest,jsii-diff,jsii-pacmak,prettier,ts-jest,ts-node,typescript,@cdklabs/sbt-aws"
         },
         {
-          "exec": "yarn install --check-files"
+          "exec": "npm install"
         },
         {
-          "exec": "yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser commit-and-tag-version eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit jsii-diff jsii-docgen jsii-pacmak jsii-rosetta jsii projen ts-jest ts-node typescript aws-cdk-lib constructs"
+          "exec": "npm update @aws-cdk/aws-kinesisfirehose-alpha @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk braces commit-and-tag-version eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-header eslint-plugin-import eslint-plugin-prettier eslint jest jest-junit jsii-diff jsii-docgen jsii-pacmak jsii-rosetta jsii prettier projen ts-jest ts-node typescript aws-cdk-lib constructs @aws-cdk/aws-kinesisfirehose-destinations-alpha @aws-cdk/aws-lambda-python-alpha @cdklabs/sbt-aws cdk-nag"
         },
         {
           "exec": "npx projen"

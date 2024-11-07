@@ -22,9 +22,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20.x
       - name: Install dependencies
-        run: yarn install --check-files
+        run: npm install
       - name: build
         run: npx projen build
       - name: Find mutations
@@ -35,7 +35,7 @@ jobs:
         working-directory: ./
       - name: Upload patch
         if: steps.self_mutation.outputs.self_mutation_happened
-        uses: actions/upload-artifact@v4.4.0
+        uses: actions/upload-artifact@v4.3.6
         with:
           name: repo.patch
           path: repo.patch
@@ -50,7 +50,7 @@ jobs:
         run: cd dist && getfacl -R . > permissions-backup.acl
         continue-on-error: true
       - name: Upload artifact
-        uses: actions/upload-artifact@v4.4.0
+        uses: actions/upload-artifact@v4.3.6
         with:
           name: build-artifact
           path: dist
@@ -65,7 +65,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Download patch
@@ -89,13 +89,12 @@ jobs:
   package-js:
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    if: ${{ !needs.build.outputs.self_mutation_happened }}
+    permissions: {}
+    if: "! needs.build.outputs.self_mutation_happened"
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20.x
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -104,19 +103,11 @@ jobs:
       - name: Restore build artifact permissions
         run: cd dist && setfacl --restore=permissions-backup.acl
         continue-on-error: true
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          path: .repo
+      - name: Prepare Repository
+        run: mv dist .repo
       - name: Install Dependencies
-        run: cd .repo && yarn install --check-files --frozen-lockfile
-      - name: Extract build artifact
-        run: tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo
-      - name: Move build artifact out of the way
-        run: mv dist dist.old
+        run: cd .repo && npm ci
       - name: Create js artifact
         run: cd .repo && npx projen package:js
-      - name: Collect js artifact
+      - name: Collect js Artifact
         run: mv .repo/dist dist
